@@ -16,12 +16,14 @@ mkl_require pic
 mkl_require atomics
 mkl_require good_cflags
 mkl_require socket
+mkl_require zstd
 
 # Generate version variables from rdkafka.h hex version define
 # so we can use it as string version when generating a pkg-config file.
 
 verdef=$(grep '^#define  *RD_KAFKA_VERSION  *0x' src/rdkafka.h | sed 's/^#define  *RD_KAFKA_VERSION  *\(0x[a-f0-9]*\)\.*$/\1/')
 mkl_require parseversion hex2str "%d.%d.%d" "$verdef" RDKAFKA_VERSION_STR
+
 
 mkl_toggle_option "Development" ENABLE_DEVEL "--enable-devel" "Enable development asserts, checks, etc" "n"
 mkl_toggle_option "Development" ENABLE_VALGRIND "--enable-valgrind" "Enable in-code valgrind suppressions" "n"
@@ -94,17 +96,7 @@ void foo (void) {
     mkl_lib_check "zlib" "WITH_ZLIB" disable CC "-lz" \
                   "#include <zlib.h>"
     mkl_lib_check "libcrypto" "" disable CC "-lcrypto"
-    mkl_meta_set "zstd" "deb" "libzstd-dev"
-    mkl_meta_set "zstd" "brew" "zstd"
-    mkl_lib_check --static=-lzstd "libzstd" "WITH_ZSTD" disable CC "-lzstd" \
-                  "
-#include <zstd.h>
-#include <zstd_errors.h>
-
-void foo (void) {
-     ZSTD_getFrameContentSize(NULL, 0);
-}
-"
+    mkl_check "zstd" disable
 
     if mkl_lib_check "libm" "" disable CC "-lm" \
                      "#include <math.h>"; then
